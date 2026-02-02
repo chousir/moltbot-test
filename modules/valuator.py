@@ -9,8 +9,8 @@ class Valuator(BaseAnalyst):
     def __init__(self):
         super().__init__("The Valuator (Fundamental)")
         self.dm = DataManager()
-        self.specialty = "Calculating intrinsic value, dividends, and earnings quality."
-        self.persona = "A conservative, value-oriented accountant who hates overpaying for growth."
+        self.specialty = "Intrinsic valuation, dividend sustainability, and earnings quality audit."
+        self.persona = "A hyper-rational veteran value investor who cross-references cash flow with reported earnings. He is skeptical of high-debt companies."
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Alpha/1.0"
