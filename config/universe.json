@@ -1,0 +1,18 @@
+{
+    "Semiconductors (半導體)": {
+        "description": "台灣核心產業，包含晶圓代工與 IC 設計",
+        "tickers": ["2330.TW", "2454.TW", "2303.TW", "3711.TW"]
+    },
+    "AI_Server (AI 伺服器/硬體)": {
+        "description": "受惠於 AI 浪潮的硬體製造商",
+        "tickers": ["2382.TW", "3231.TW", "2356.TW", "6669.TW"]
+    },
+    "Financials (金融權值)": {
+        "description": "長期殖利率穩定的金控",
+        "tickers": ["2881.TW", "2882.TW", "2891.TW", "5880.TW"]
+    },
+    "High_Speed_Network (網通/光通訊)": {
+        "description": "資料中心傳輸升級受惠股",
+        "tickers": ["2345.TW", "4977.TW"]
+    }
+}

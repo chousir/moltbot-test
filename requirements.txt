@@ -1,0 +1,8 @@
+pandas
+numpy
+yfinance
+pandas_ta
+scikit-learn
+requests
+beautifulsoup4
+colorama
