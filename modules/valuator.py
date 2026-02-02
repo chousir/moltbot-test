@@ -3,10 +3,14 @@ import datetime
 from datetime import timedelta
 import time
 from modules.base_analyst import BaseAnalyst
+from utils.data_manager import DataManager
 
 class Valuator(BaseAnalyst):
     def __init__(self):
         super().__init__("The Valuator (Fundamental)")
+        self.dm = DataManager()
+        self.specialty = "Calculating intrinsic value, dividends, and earnings quality."
+        self.persona = "A conservative, value-oriented accountant who hates overpaying for growth."
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Alpha/1.0"
@@ -19,22 +23,27 @@ class Valuator(BaseAnalyst):
         return target_date
 
     def _fetch_bwibbu_data(self, date_obj):
-        """Fetch PE, PB, Yield from TWSE (BWIBBU)"""
+        """Fetch PE, PB, Yield with caching"""
         date_str = date_obj.strftime("%Y%m%d")
+        
+        # Try Cache
+        cached = self.dm.load_data("TWSE_BWIBBU", date_str, max_age_hours=12)
+        if cached:
+            return cached
+
         url = f"https://www.twse.com.tw/rwd/zh/afterTrading/BWIBBU_d?date={date_str}&selectType=ALL&response=json"
         
         try:
-            print(f"   [Debug] Fetching TWSE Fundamental data for {date_str}...")
             response = self.session.get(url, timeout=10)
             data = response.json()
             
             if data['stat'] != 'OK':
                 return None
             
-            # Fields: ["證券代號","證券名稱","殖利率(%)","股利年度","本益比","股價淨值比","財報年/季"]
+            # Save to Cache
+            self.dm.save_data("TWSE_BWIBBU", date_str, data['data'])
             return data['data']
-        except Exception as e:
-            print(f"   [Error] Connection failed: {e}")
+        except Exception:
             return None
 
     def analyze(self, ticker: str) -> dict:

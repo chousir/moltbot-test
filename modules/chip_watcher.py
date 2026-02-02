@@ -1,4 +1,5 @@
 from modules.base_analyst import BaseAnalyst
+from utils.data_manager import DataManager
 import requests
 import datetime
 import pandas as pd
@@ -8,9 +9,12 @@ from datetime import timedelta
 class ChipWatcher(BaseAnalyst):
     def __init__(self):
         super().__init__("The Chip Watcher (Institutional)")
+        self.dm = DataManager()
         self.session = requests.Session()
+        self.specialty = "Tracking flow of 3 Major Institutional Investors (Foreign, Trust, Dealers)."
+        self.persona = "A cynical detective who only believes in where the cold, hard cash is moving."
         self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Alpha/1.0"
         })
 
     def _get_taiwan_date(self, lookback_days=0):
@@ -21,25 +25,27 @@ class ChipWatcher(BaseAnalyst):
         return target_date
 
     def _fetch_twse_data(self, date_obj):
-        """Fetch T86 (Institutional Investors) data from TWSE"""
+        """Fetch T86 data with local caching"""
         date_str = date_obj.strftime("%Y%m%d")
+        
+        # Try Cache First
+        cached = self.dm.load_data("TWSE_T86", date_str, max_age_hours=12)
+        if cached:
+            return cached['data'], cached['fields']
+
         url = f"https://www.twse.com.tw/rwd/zh/fund/T86?date={date_str}&selectType=ALL&response=json"
         
         try:
-            print(f"   [Debug] Fetching TWSE data for {date_str}...")
             response = self.session.get(url, timeout=10)
             data = response.json()
             
             if data['stat'] != 'OK':
-                return None # No data (Holiday or Error)
+                return None, None
             
-            # Fields logic varies slightly over time, but generally:
-            # 0: Stock Code, 1: Name, ... 
-            # We need to find the index for Foreign, Trust, Dealer Net Buy/Sell
-            fields = data['fields']
-            return data['data'], fields
-        except Exception as e:
-            print(f"   [Error] Connection failed: {e}")
+            # Save to Cache
+            self.dm.save_data("TWSE_T86", date_str, {"data": data['data'], "fields": data['fields']})
+            return data['data'], data['fields']
+        except Exception:
             return None, None
 
     def analyze(self, ticker: str) -> dict:
