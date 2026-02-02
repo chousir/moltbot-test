@@ -11,6 +11,7 @@ from modules.valuator import Valuator
 from modules.chip_watcher import ChipWatcher
 from modules.strategist import Strategist
 from modules.whale_hunter import WhaleHunter
+from modules.performance_auditor import PerformanceAuditor
 
 # Utils
 from utils.paper_trader import PaperTrader
@@ -36,6 +37,9 @@ class AlphaCore:
         
         # Virtual Account
         self.trader = PaperTrader()
+        
+        # Performance Auditor - 自我進化引擎
+        self.auditor = PerformanceAuditor()
 
         # Weighted Matrix for Long-term Investing
         self.weights = {
@@ -50,10 +54,22 @@ class AlphaCore:
         self.persona = "The Pragmatic Architect"
         self.motto = "Data has no ego; neither should we."
 
-    def run_pipeline(self, ticker: str, save_log: bool = True):
+    def run_pipeline(self, ticker: str, save_log: bool = True, auto_weight_adjust: bool = True):
         print(f"\n{Fore.CYAN}{Style.BRIGHT}=== {self.persona} Collective Review ===")
         print(f"{Fore.CYAN}Target: {ticker} | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         
+        # 1. 驗證過去的預測（審計引擎）
+        self._run_audit_cycle()
+        
+        # 2. 如果有績效數據，動態調整權重
+        if auto_weight_adjust:
+            self.weights, was_adjusted = self.auditor.adjust_weights(self.weights)
+            if was_adjusted:
+                print(f"\n{Fore.YELLOW}[Auto-Adjustment] 權重已根據績效調整:")
+                for analyst_name, weight in self.weights.items():
+                    print(f"   {analyst_name}: {weight*100:.1f}%")
+        
+        # 3. 收集分析師意見
         reports = []
         final_score = 0
         current_price = 0
@@ -92,6 +108,10 @@ class AlphaCore:
         # Prediction Engine (Short/Medium/Long Term)
         self._generate_predictions(ticker, current_price, final_score)
 
+        # 4. 記錄預測供未來驗證
+        if current_price > 0:
+            self.auditor.record_prediction(ticker, reports, current_price)
+
         # Virtual Execution
         if current_price > 0:
             trade_msg = self.trader.execute_signal(ticker, decision, current_price, reason=f"Alpha Score: {final_score:.2f}")
@@ -99,6 +119,17 @@ class AlphaCore:
 
         if save_log:
             self._save_decision_log(ticker, final_score, decision, reports)
+
+    def _run_audit_cycle(self):
+        """執行績效審計周期"""
+        try:
+            verified_count = self.auditor.verify_predictions()
+            if verified_count > 0:
+                print(f"\n{Fore.CYAN}[Audit] 已驗證 {verified_count} 個預測")
+                # 輸出審計報告摘要
+                print(self.auditor.generate_audit_report())
+        except Exception as e:
+            print(f"{Fore.YELLOW}[Audit] 審計周期發生錯誤: {e}")
 
     def _generate_predictions(self, ticker, price, score):
         """
