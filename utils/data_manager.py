@@ -23,22 +23,17 @@ class DataManager:
         with open(path, 'w') as f:
             json.dump(cache_entry, f, ensure_ascii=False, indent=4)
 
-    def load_data(self, category, identifier, max_age_hours=24):
-        path = self.get_cache_path(category, identifier)
-        if not os.path.exists(path):
-            return None
+    def get_summarized_prompt_data(self, category, identifier, filter_func=None):
+        """
+        Retrieves data and applies a filtering/summarization function 
+        to reduce token count before passing to the LLM.
+        """
+        data = self.load_data(category, identifier)
+        if not data:
+            return "No recent data available."
         
-        try:
-            with open(path, 'r') as f:
-                entry = json.load(f)
-            
-            # Check age
-            timestamp = datetime.datetime.fromisoformat(entry['timestamp'])
-            age = datetime.datetime.now() - timestamp
-            
-            if age.total_seconds() > (max_age_hours * 3600):
-                return None # Cache expired
-                
-            return entry['data']
-        except Exception:
-            return None
+        if filter_func:
+            return filter_func(data)
+        
+        # Default: Return a truncated JSON to save tokens
+        return json.dumps(data)[:1000] + "... (truncated)"

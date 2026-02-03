@@ -124,6 +124,9 @@ class ChiefAdvisor:
                 row = f"| **{ticker}** | {rating} | {close_price} | {tp} | {sl} | {rationale_str} |"
                 final_report_md += row + "\n"
                 
+                # Save Log for this specific analysis
+                self.alpha._save_decision_log(ticker, final_score, rating, reports)
+
                 print(f"   Processed {ticker}: {rating} (Score: {final_score:.2f})")
 
                 # Classification Logic

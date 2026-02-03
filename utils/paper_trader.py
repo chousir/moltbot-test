@@ -94,9 +94,32 @@ class PaperTrader:
             "reason": reason
         })
 
+    def update_portfolio_value(self, market_data: dict):
+        """
+        Updates total equity based on current market prices.
+        market_data: {ticker: current_price}
+        """
+        unrealized_pnl = 0
+        total_position_value = 0
+        
+        for ticker, position in self.state['positions'].items():
+            current_price = market_data.get(ticker, position['avg_price'])
+            position_value = current_price * position['quantity']
+            cost_basis = position['avg_price'] * position['quantity']
+            
+            unrealized_pnl += (position_value - cost_basis)
+            total_position_value += position_value
+            
+            self.state['positions'][ticker]['current_price'] = current_price
+            self.state['positions'][ticker]['unrealized_pnl'] = position_value - cost_basis
+
+        self.state['total_equity'] = self.state['cash'] + total_position_value
+        self._save_state()
+
     def get_summary(self):
         return {
-            "Total Equity": self.state['total_equity'],
-            "Available Cash": self.state['cash'],
-            "Current Positions": len(self.state['positions'])
+            "Total Equity": f"${self.state['total_equity']:,.2f}",
+            "Available Cash": f"${self.state['cash']:,.2f}",
+            "Number of Positions": len(self.state['positions']),
+            "Current Positions": self.state['positions']
         }
